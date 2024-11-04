@@ -1,7 +1,21 @@
 @echo off
 
-REM Verifica la version de Python en python_embeded
-for /f "tokens=2 delims= " %%a in ('python_embeded\python.exe --version') do set PYTHON_VERSION=%%a
+REM Verifica si python.exe existe en python_embeded
+if exist "python_embeded\python.exe" (
+    set PYTHON_EXECUTABLE=python_embeded\python.exe
+) else (
+    REM Si no existe en python_embeded, verifica en venv\Scripts
+    if exist "venv\Scripts\python.exe" (
+        set PYTHON_EXECUTABLE=venv\Scripts\python.exe
+    ) else (
+        echo No se encontró Python en python_embeded ni en venv\Scripts.
+        pause
+        exit /b
+    )
+)
+
+REM Verifica la version de Python en la ubicación seleccionada
+for /f "tokens=2 delims= " %%a in ('%PYTHON_EXECUTABLE% --version') do set PYTHON_VERSION=%%a
 
 REM Extrae la version principal y secundaria
 for /f "tokens=1,2 delims=." %%b in ("%PYTHON_VERSION%") do (
@@ -20,7 +34,7 @@ if %PYTHON_MAJOR%==3 (
 
 REM Comprueba si se establecio una URL valida
 if "%WHL_URL%"=="" (
-    echo No se encontro una version compatible de Python.
+    echo No se encontró una versión compatible de Python.
     pause
     exit /b
 )
@@ -39,12 +53,12 @@ if not exist "%WHL_FILE%" (
 )
 
 REM Instala el archivo .whl descargado
-python_embeded\python.exe -m pip install --force-reinstall .\%WHL_FILE%
+%PYTHON_EXECUTABLE% -m pip install --force-reinstall .\%WHL_FILE%
 
 REM Verifica si la instalacion fue exitosa
 if %errorlevel% equ 0 (
-    echo Installation successful
+    echo Instalación exitosa.
 ) else (
-    echo Installation failed
+    echo Fallo en la instalación.
 )
 pause
